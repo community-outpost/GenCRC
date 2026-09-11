@@ -2,7 +2,6 @@ package version
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 )
 
@@ -95,14 +94,6 @@ func matchOptimizedMSVC(data []byte) (int, int, bool) {
 		return 0, 0, false
 	}
 	return int(data[11]), minor, true
-}
-
-func FromFile(path string) (int, int, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return 0, 0, err
-	}
-	return Extract(data)
 }
 
 func Online(data []byte) string {

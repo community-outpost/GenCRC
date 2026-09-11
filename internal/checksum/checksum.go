@@ -2,27 +2,27 @@ package checksum
 
 const mask32 uint32 = 0xffffffff
 
-// Legacy is the byte-at-a-time executable CRC accumulator.
-type Legacy struct{ value uint32 }
+// ByteCRC is the byte-at-a-time executable CRC accumulator.
+type ByteCRC struct{ value uint32 }
 
-func (c *Legacy) Add(data []byte) {
+func (c *ByteCRC) Add(data []byte) {
 	for _, b := range data {
 		hibit := c.value >> 31
 		c.value = ((c.value << 1) + uint32(b) + hibit) & mask32
 	}
 }
 
-func (c *Legacy) Value() uint32 { return c.value }
+func (c *ByteCRC) Value() uint32 { return c.value }
 
-// Xfer is the four-byte INI CRC accumulator.
-type Xfer struct{ value uint32 }
+// BlockCRC is the four-byte-block INI CRC accumulator.
+type BlockCRC struct{ value uint32 }
 
-func (c *Xfer) addBE(value uint32) {
+func (c *BlockCRC) addBE(value uint32) {
 	hibit := c.value >> 31
 	c.value = ((c.value << 1) + value + hibit) & mask32
 }
 
-func (c *Xfer) Add(data []byte) {
+func (c *BlockCRC) Add(data []byte) {
 	for len(data) >= 4 {
 		c.addBE(uint32(data[0])<<24 | uint32(data[1])<<16 | uint32(data[2])<<8 | uint32(data[3]))
 		data = data[4:]
@@ -41,7 +41,7 @@ func (c *Xfer) Add(data []byte) {
 	c.value = ((c.value << 1) + value + hibit) & mask32
 }
 
-func (c *Xfer) Value() uint32 {
+func (c *BlockCRC) Value() uint32 {
 	v := c.value
 	return v>>24 | (v>>8)&0xff00 | (v<<8)&0xff0000 | v<<24
 }

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "provenance": {
+    "recorded": "2026-09-11",
+    "deployment": "baee4072-6612-460f-9f11-5fbb0ab1a10d",
+    "source": "Existing prepared Steam installation INI and SCB files used by this deployment. These hashes pin deployed bytes; they do not independently authenticate an unmodified retail installation."
+  },
+  "games": [
+    {
+      "schema": 1,
+      "game": "generals",
+      "files": [
+        { "name": "INI.big", "bytes": 7607479, "sha256": "bff8d621088b25fd8b041c8acca020a020fabc66f972ab2bd131fc67d905a72c" },
+        { "name": "SkirmishScripts.scb", "bytes": 467525, "sha256": "9eedadc0d8d9deb241d56a3db148720029e119c0cfc03a3ef74cade9da3106a5" },
+        { "name": "MultiplayerScripts.scb", "bytes": 6915, "sha256": "86c6a3b82a4188ba3c7abf1388f9d5ee503f06634466be095256a2aefb4ae06b" }
+      ]
+    },
+    {
+      "schema": 1,
+      "game": "generalsmd",
+      "files": [
+        { "name": "INIZH.big", "bytes": 18764486, "sha256": "8ecfe5ebc7d4a81f0611f4e7a8addb77423d558373acca365d6ce19f16f54a43" },
+        { "name": "SkirmishScripts.scb", "bytes": 2272629, "sha256": "8f93862b751f289b052206b87170cc840044cb66660fbf6ae30d5782c1d73776" },
+        { "name": "MultiplayerScripts.scb", "bytes": 10381, "sha256": "86d6bd295dd56dc17c6c1289f9a530506c755b0dbc3e868448d93dd468738ab6" }
+      ]
+    }
+  ]
+}

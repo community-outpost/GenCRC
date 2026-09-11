@@ -1,0 +1,22 @@
+{
+  "name": "gencrc-worker",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pwsh -NoProfile -File ../scripts/build.ps1",
+    "build:cli": "pwsh -NoProfile -File ../scripts/build.ps1 -Target cli",
+    "build:worker": "pwsh -NoProfile -File ../scripts/build.ps1 -Target worker",
+    "dev": "npm run build:wasm && wrangler dev",
+    "deploy": "npm run snapshots:verify && npm run build:wasm && wrangler deploy",
+    "test": "pwsh -NoProfile -File ../scripts/check.ps1",
+    "build:wasm": "pwsh -NoProfile -File ../scripts/build-worker.ps1",
+    "snapshots:prepare": "pwsh -NoProfile -File ../scripts/prepare-retail-snapshots.ps1",
+    "snapshots:verify": "pwsh -NoProfile -File ../scripts/prepare-retail-snapshots.ps1 -Verify"
+  },
+  "devDependencies": {
+    "wrangler": "4.131.0"
+  }
+}

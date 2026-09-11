@@ -1,7 +1,6 @@
 package gamecrc
 
 import (
-	"encoding/binary"
 	"fmt"
 	"io/fs"
 	"os"
@@ -9,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/community-outpost/GenVersion/internal/checksum"
+	"github.com/community-outpost/GenCRC/internal/checksum"
 )
 
 type archiveEntry struct {
@@ -71,27 +70,13 @@ func readIndex(archive string) (map[string]archiveEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(data) < 16 || string(data[:4]) != "BIGF" {
-		return nil, fmt.Errorf("%s: invalid BIG header", archive)
+	parsed, err := parseBigDirectory(data, archive)
+	if err != nil {
+		return nil, err
 	}
-	count, pos := int(binary.BigEndian.Uint32(data[8:12])), 16
-	entries := make(map[string]archiveEntry, count)
-	for range count {
-		if pos+8 > len(data) {
-			return nil, fmt.Errorf("%s: truncated BIG directory", archive)
-		}
-		offset, size := int(binary.BigEndian.Uint32(data[pos:])), int(binary.BigEndian.Uint32(data[pos+4:]))
-		pos += 8
-		end := pos
-		for end < len(data) && data[end] != 0 {
-			end++
-		}
-		if end == len(data) || offset < 0 || size < 0 || offset > len(data)-size {
-			return nil, fmt.Errorf("%s: invalid BIG directory entry", archive)
-		}
-		path := strings.ReplaceAll(string(data[pos:end]), "/", `\`)
-		entries[strings.ToLower(path)] = archiveEntry{path: path, archive: archive, offset: offset, size: size}
-		pos = end + 1
+	entries := make(map[string]archiveEntry, len(parsed))
+	for key, entry := range parsed {
+		entries[key] = archiveEntry{path: entry.path, archive: archive, offset: entry.offset, size: entry.size}
 	}
 	return entries, nil
 }
@@ -250,7 +235,7 @@ func relative(root, path string) string {
 	return strings.ReplaceAll(rel, "/", `\`)
 }
 
-func loadDirectory(vfs *FileSystem, path string, crc *checksum.Xfer, verbose bool) {
+func loadDirectory(vfs *FileSystem, path string, crc *checksum.BlockCRC, verbose bool) {
 	read := func(file string) bool {
 		data, err := vfs.Read(file)
 		if err != nil {
@@ -301,7 +286,7 @@ func INICRC(root, fallbackGeneralsRoot, game string, sideloads []string, mod str
 		order = append([][2]string(nil), order[:3]...)
 		order = append(order, generalsMDOrder[5:]...)
 	}
-	crc := new(checksum.Xfer)
+	crc := new(checksum.BlockCRC)
 	for _, path := range order[0] {
 		if path != "" {
 			loadDirectory(vfs, path, crc, verbose)
@@ -332,7 +317,7 @@ func ExeCRC(exe, root string, major, minor int) (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
-	crc := new(checksum.Legacy)
+	crc := new(checksum.ByteCRC)
 	crc.Add(data)
 	crc.Add([]byte{byte(minor), byte(minor >> 8), byte(major), byte(major >> 8)})
 	for _, name := range []string{"SkirmishScripts.scb", "MultiplayerScripts.scb"} {
@@ -373,6 +358,11 @@ func DetectGameFromExe(path string) string {
 	if err != nil {
 		return ""
 	}
+	return DetectGameBytes(data)
+}
+
+// DetectGameBytes identifies the game from executable strings without filesystem access.
+func DetectGameBytes(data []byte) string {
 	lower := strings.ToLower(string(data))
 	if strings.Contains(lower, "generalsmd") || strings.Contains(lower, "generals zero hour") || strings.Contains(lower, "generalszh") {
 		return "generalsmd"
@@ -408,5 +398,10 @@ func resolveName(directory, name, fallback string) string {
 
 func IsLauncher(path string) bool {
 	data, err := os.ReadFile(path)
-	return err == nil && strings.Contains(string(data), "Launcher config file missing") && strings.Contains(string(data), "launcher.cfg")
+	return err == nil && IsLauncherBytes(data)
+}
+
+// IsLauncherBytes identifies the retail bootstrapper, not the game engine.
+func IsLauncherBytes(data []byte) bool {
+	return strings.Contains(string(data), "Launcher config file missing") && strings.Contains(string(data), "launcher.cfg")
 }
